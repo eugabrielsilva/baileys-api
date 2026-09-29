@@ -1,3 +1,18 @@
+import { jidDecode } from "@whiskeysockets/baileys"
+
+const phoneMap = new Map<string, string>()
+
+export function setCachedPhone(phone: string, jid: string): void {
+    const digits = phone.replace(/\D/g, '')
+    if (!digits) return
+    phoneMap.set(digits, jid)
+}
+
+export function getCachedPhone(phone: string): string | null {
+    const digits = phone.replace(/\D/g, '')
+    return phoneMap.get(digits) ?? null
+}
+
 export function logger(type: string, message: string, ...optionalParams: any[]): void {
     const colors: Record<string, string> = {
         reset: '\x1b[0m',
@@ -21,12 +36,9 @@ export function logger(type: string, message: string, ...optionalParams: any[]):
     log(`${color}[${date}] [${type.toUpperCase()}] ${message}${colors.reset}`, ...optionalParams)
 }
 
-export function formatPhoneToClient(phone: string): string {
-    return phone.replace(/\D/g, '') + '@s.whatsapp.net';
-}
-
 export function formatPhoneToUser(phone: string): string {
-    return '+' + phone.replace('@s.whatsapp.net', '')
+    const parts = phone.split(':')
+    return '+' + parts[0].replace('@s.whatsapp.net', '')
 }
 
 export function formatDate(timestamp: number): string {
@@ -37,6 +49,50 @@ export function formatUptime(totalSeconds: number) {
     const days = Math.floor(totalSeconds / (3600 * 24))
     const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600)
     const minutes = Math.floor((totalSeconds % 3600) / 60)
-    const seconds = totalSeconds % 60
+    const seconds = Math.floor(totalSeconds % 60)
     return `${days}d ${hours}h ${minutes}m ${seconds}s`
+}
+
+export async function getCachedJid(sock: any, phone: string) {
+    const digits = phone.replace(/\D/g, '')
+    const cached = phoneMap.get(digits)
+    if (cached) return cached
+
+    const resolved = await resolvePhoneToJid(sock, digits)
+    if (resolved) phoneMap.set(digits, resolved)
+    return resolved
+}
+
+export async function resolvePhoneToJid(sock: any, phone: string): Promise<string | null> {
+    const digits = phone.replace(/\D/g, '')
+    if (!digits) return null
+
+    const pnJid = `${digits}@s.whatsapp.net`
+    const [result] = await sock.onWhatsApp(pnJid)
+
+    if (!result?.exists) return null
+    const canonical = result.jid || pnJid
+
+    try {
+        const lid = await sock.signalRepository?.lidMapping?.getLIDForPN?.(pnJid)
+        if (lid) return lid
+    } catch { }
+
+    return canonical
+}
+
+export function extractPhoneFromJid(jid?: string | null): string | null {
+    if (!jid) return null
+
+    const decoded = jidDecode(jid)
+    if (!decoded) return null
+
+    const user = decoded.user
+    const server = decoded.server
+
+    if (server === 's.whatsapp.net' && user && /^\d+$/.test(user)) {
+        return user
+    }
+
+    return null
 }

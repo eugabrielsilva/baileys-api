@@ -8,7 +8,7 @@ import { generate } from 'qrcode-terminal'
 import P from 'pino'
 import dotenv from 'dotenv'
 import express, { NextFunction, Request, Response } from 'express'
-import { formatPhoneToClient, formatPhoneToUser, formatUptime, logger } from './utils'
+import { formatPhoneToUser, formatUptime, getCachedJid, logger } from './utils'
 import { sendHook } from './hook'
 import Queue from './queue'
 
@@ -134,13 +134,13 @@ async function initializeServer() {
         const formattedPhone = formatPhoneToUser(number as string)
 
         try {
-            const jid = await sock.onWhatsApp(formatPhoneToClient(number as string))
+            const jid = await getCachedJid(sock, number as string)
 
-            if (jid?.[0]?.exists) {
+            if (jid) {
                 logger('info', `Queuing message "${message}" to ${formattedPhone}...`)
 
                 Queue.add(async () => {
-                    await sock.sendMessage(jid[0].jid, { text: message })
+                    await sock.sendMessage(jid, { text: message })
                     logger('info', `Message sent to ${formattedPhone}.`)
                 })
 
