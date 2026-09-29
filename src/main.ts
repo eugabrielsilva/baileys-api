@@ -69,8 +69,10 @@ async function connectToWhatsApp() {
                 logger('auth', 'Client disconnected. Please delete the .auth folder and restart the application to re-authenticate.')
             }
         } else if (connection === 'open') {
+            const number = formatPhoneToUser(sock.user?.phoneNumber ?? sock.user?.id ?? '')
             logger('auth', 'Successfully authenticated.')
             logger('auth', 'Client is ready.')
+            logger('auth', `Connected to WhatsApp with ${number}.`)
         }
 
         if (qr) {

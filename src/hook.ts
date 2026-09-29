@@ -4,14 +4,15 @@ import { WAMessage } from "@whiskeysockets/baileys"
 
 export function sendHook(hookUrl: string, type: string, message: WAMessage) {
     const token = process.env.WEBHOOK_SECRET || ''
+    const text = message.message?.conversation ?? message.message?.extendedTextMessage?.text ?? ''
 
     const body = {
         id: message.key.id,
         type: 'text',
-        from: formatPhoneToUser(message.key.remoteJidAlt || message.key.remoteJid || ''),
-        body: message.message?.extendedTextMessage?.text,
-        date: formatDate(message.messageTimestamp as number),
-        timestamp: message.messageTimestamp,
+        from: formatPhoneToUser(message.key.remoteJidAlt ?? message.key.remoteJid ?? ''),
+        body: text,
+        date: formatDate(Number(message.messageTimestamp)),
+        timestamp: Number(message.messageTimestamp),
         name: message.pushName,
     }
 
