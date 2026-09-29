@@ -8,7 +8,7 @@ import { generate } from 'qrcode-terminal'
 import P from 'pino'
 import dotenv from 'dotenv'
 import express, { NextFunction, Request, Response } from 'express'
-import { formatPhoneToClient, formatPhoneToUser, logger } from './utils'
+import { formatPhoneToClient, formatPhoneToUser, formatUptime, logger } from './utils'
 import { sendHook } from './hook'
 import Queue from './queue'
 
@@ -86,6 +86,13 @@ async function connectToWhatsApp() {
 
         for (const m of event.messages) {
             if (m.key.fromMe) continue
+
+            const text = m.message?.conversation ?? m.message?.extendedTextMessage?.text ?? ''
+
+            if (text && text.trim().toLowerCase() === '/ping') {
+                const uptime = formatUptime(process.uptime())
+                await sock.sendMessage(String(m.key.remoteJid), { text: `🤖 Pong!\nUptime: ${uptime}` })
+            }
 
             const hookUrl = process.env.WEBHOOK_URL
             if (!hookUrl?.length) return

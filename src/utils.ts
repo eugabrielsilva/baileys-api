@@ -32,3 +32,11 @@ export function formatPhoneToUser(phone: string): string {
 export function formatDate(timestamp: number): string {
     return new Date(timestamp * 1000).toISOString()
 }
+
+export function formatUptime(totalSeconds: number) {
+    const days = Math.floor(totalSeconds / (3600 * 24))
+    const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`
+}
