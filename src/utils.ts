@@ -1,11 +1,47 @@
 import { jidDecode } from "@whiskeysockets/baileys"
+import { readFileSync, writeFileSync } from "fs"
+import { join } from "path"
 
 const phoneMap = new Map<string, string>()
+const phoneMapFile = join(process.cwd(), '.phone-map.json')
+
+function loadPhoneMap(): void {
+    try {
+        const fileContent = readFileSync(phoneMapFile, 'utf-8')
+        const entries = JSON.parse(fileContent) as Array<[string, string]>
+
+        if (!Array.isArray(entries)) return
+
+        for (const entry of entries) {
+            if (!Array.isArray(entry) || entry.length !== 2) continue
+
+            const [phone, jid] = entry
+            if (typeof phone !== 'string' || typeof jid !== 'string') continue
+
+            phoneMap.set(phone, jid)
+        }
+    } catch (error: any) {
+        if (error?.code !== 'ENOENT') {
+            logger('warning', 'Failed to load phone cache from disk', error)
+        }
+    }
+}
+
+export function savePhoneMap(): void {
+    try {
+        writeFileSync(phoneMapFile, JSON.stringify([...phoneMap.entries()], null, 2), 'utf-8')
+    } catch (error) {
+        logger('warning', 'Failed to persist phone cache to disk', error)
+    }
+}
+
+loadPhoneMap()
 
 export function setCachedPhone(phone: string, jid: string): void {
     const digits = phone.replace(/\D/g, '')
     if (!digits) return
     phoneMap.set(digits, jid)
+    savePhoneMap()
 }
 
 export function getCachedPhone(phone: string): string | null {
@@ -59,7 +95,10 @@ export async function getCachedJid(sock: any, phone: string) {
     if (cached) return cached
 
     const resolved = await resolvePhoneToJid(sock, digits)
-    if (resolved) phoneMap.set(digits, resolved)
+    if (resolved) {
+        phoneMap.set(digits, resolved)
+        savePhoneMap()
+    }
     return resolved
 }
 

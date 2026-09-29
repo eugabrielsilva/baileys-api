@@ -1,3 +1,4 @@
 .env
+.phone-map.json
 /.auth/
 /node_modules/
