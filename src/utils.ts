@@ -1,4 +1,4 @@
-import { jidDecode } from "@whiskeysockets/baileys"
+import makeWASocket, { jidDecode } from "@whiskeysockets/baileys"
 import { readFileSync, writeFileSync } from "fs"
 import { join } from "path"
 
@@ -89,7 +89,7 @@ export function formatUptime(totalSeconds: number) {
     return `${days}d ${hours}h ${minutes}m ${seconds}s`
 }
 
-export async function getCachedJid(sock: any, phone: string) {
+export async function getCachedJid(sock: ReturnType<typeof makeWASocket>, phone: string) {
     const digits = phone.replace(/\D/g, '')
     const cached = phoneMap.get(digits)
     if (cached) return cached
@@ -102,15 +102,15 @@ export async function getCachedJid(sock: any, phone: string) {
     return resolved
 }
 
-export async function resolvePhoneToJid(sock: any, phone: string): Promise<string | null> {
+export async function resolvePhoneToJid(sock: ReturnType<typeof makeWASocket>, phone: string): Promise<string | null> {
     const digits = phone.replace(/\D/g, '')
     if (!digits) return null
 
     const pnJid = `${digits}@s.whatsapp.net`
-    const [result] = await sock.onWhatsApp(pnJid)
+    const result = await sock.onWhatsApp(pnJid)
 
-    if (!result?.exists) return null
-    const canonical = result.jid || pnJid
+    if (!result?.[0]?.exists) return null
+    const canonical = result?.[0]?.jid || pnJid
 
     try {
         const lid = await sock.signalRepository?.lidMapping?.getLIDForPN?.(pnJid)

@@ -93,6 +93,7 @@ async function connectToWhatsApp() {
             if (text && text.trim().toLowerCase() === '/ping') {
                 const uptime = formatUptime(process.uptime())
                 await sock.sendMessage(String(m.key.remoteJid), { text: `🤖 Pong!\nUptime: ${uptime}` })
+                return
             }
 
             const hookUrl = process.env.WEBHOOK_URL
@@ -113,6 +114,14 @@ async function initializeServer() {
     app.use(validateToken)
 
     app.post('/send-message/:number', async (req: Request, res: Response) => {
+        if (!req.body) {
+            res.status(400).json({
+                status: false,
+                error: 'Missing request body.'
+            })
+            return
+        }
+
         const { number } = req.params
         const { message, buttons } = req.body
 
