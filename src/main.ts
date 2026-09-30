@@ -11,6 +11,7 @@ import express, { NextFunction, Request, Response } from 'express'
 import { formatPhoneToUser, formatUptime, getCachedJid, logger } from './utils'
 import { sendHook } from './hook'
 import Queue from './queue'
+import { InteractiveButtonName, sendButtons } from '@destroyer/button-helper'
 
 let sock: ReturnType<typeof makeWASocket>
 dotenv.config({ quiet: true })
@@ -113,7 +114,7 @@ async function initializeServer() {
 
     app.post('/send-message/:number', async (req: Request, res: Response) => {
         const { number } = req.params
-        const { message } = req.body
+        const { message, buttons } = req.body
 
         if (!number?.length) {
             res.status(400).json({
@@ -140,7 +141,23 @@ async function initializeServer() {
                 logger('info', `Queuing message "${message}" to ${formattedPhone}...`)
 
                 Queue.add(async () => {
-                    await sock.sendMessage(jid, { text: message })
+                    if (buttons && Array.isArray(buttons) && buttons.length > 0) {
+                        await sendButtons(sock, jid, {
+                            text: message,
+                            buttons: buttons.map((btn: any) => {
+                                return {
+                                    name: InteractiveButtonName.CtaUrl,
+                                    buttonParamsJson: JSON.stringify({
+                                        display_text: btn.text,
+                                        url: btn.url
+                                    })
+                                }
+                            })
+                        })
+                    } else {
+                        await sock.sendMessage(jid, { text: message })
+                    }
+
                     logger('info', `Message sent to ${formattedPhone}.`)
                 })
 

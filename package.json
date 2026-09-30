@@ -4,6 +4,7 @@
     "start": "ts-node src/main.ts"
   },
   "dependencies": {
+    "@destroyer/button-helper": "github:Gustavo10Destroyer/button-helper",
     "@whiskeysockets/baileys": "^7.0.0-rc14",
     "axios": "^1.18.1",
     "dotenv": "^17.4.2",
