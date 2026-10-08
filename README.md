@@ -1,11 +1,13 @@
-# Baileys API
+# Baileys WhatsApp API
 
-A small HTTP API for sending WhatsApp messages using [Baileys](https://github.com/WhiskeySockets/Baileys). The application connects to WhatsApp through a QR code, exposes an endpoint for sending messages, and can forward incoming messages to a webhook. Outgoing messages are queued and sent after randomized delays, a mechanism intended to reduce the risk of account bans.
+A simple HTTP REST API for sending WhatsApp messages using [Baileys](https://github.com/WhiskeySockets/Baileys). The application connects to WhatsApp through a QR code, exposes an endpoint for sending messages, and can forward incoming messages to a webhook URL. 
+
+Outgoing messages are queued and sent after randomized delays, a mechanism intended to reduce the risk of account bans.
 
 ## Requirements
 
 - Node.js and npm
-- A WhatsApp account to connect
+- A phone with a WhatsApp account to connect
 
 ## Installation
 
@@ -57,7 +59,7 @@ curl -X POST http://localhost:3000/send-message/15551234567 \
   -d '{"message":"Hello from the API"}'
 ```
 
-The `Authorization` header is only required when `AUTH_TOKEN` is configured. A successful request returns HTTP `201` and queues the message for delivery. The response indicates that the message was accepted for sending, not that WhatsApp has confirmed delivery.
+The `Authorization` header is only required when `AUTH_TOKEN` is configured. A successful request returns HTTP `201` and queues the message for delivery. The response indicates that the message was queued for sending, not that WhatsApp has confirmed delivery.
 
 To include URL buttons, provide a `buttons` array with `text` and `url` properties:
 
@@ -75,6 +77,6 @@ To include URL buttons, provide a `buttons` array with `text` and `url` properti
 
 ### Incoming messages and health check
 
-When `WEBHOOK_URL` is set, each incoming message triggers a POST request to that URL with a `type` of `message_received` and a `data` object containing message details, including the sender, text body, timestamp, and JID. Only the message text is included in the body field. When `WEBHOOK_SECRET` is configured, it is sent in the request's `Authorization` header using the ******
+When `WEBHOOK_URL` is set, each incoming message triggers a POST request to that URL with a `type` of `message_received` and a `data` object containing message details, including the sender, text body, timestamp, and JID. Only the message text is included in the body field. When `WEBHOOK_SECRET` is configured, it is sent in the request's `Authorization` header.
 
 Send `/ping` to the connected WhatsApp account to receive a Pong response and the API process uptime.
