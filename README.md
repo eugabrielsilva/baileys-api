@@ -1,6 +1,6 @@
 # Baileys API
 
-A small HTTP API for sending WhatsApp messages using [Baileys](https://github.com/WhiskeySockets/Baileys). The application connects to WhatsApp through a QR code, exposes an endpoint for sending messages, and can forward incoming messages to a webhook.
+A small HTTP API for sending WhatsApp messages using [Baileys](https://github.com/WhiskeySockets/Baileys). The application connects to WhatsApp through a QR code, exposes an endpoint for sending messages, and can forward incoming messages to a webhook. Outgoing messages are queued and sent after randomized delays, a mechanism intended to reduce the risk of account bans.
 
 ## Requirements
 
@@ -75,6 +75,6 @@ To include URL buttons, provide a `buttons` array with `text` and `url` properti
 
 ### Incoming messages and health check
 
-When `WEBHOOK_URL` is set, incoming messages are posted to it with a `type` of `message_received` and a `data` object containing message details, including the sender, text body, timestamp, and JID. Only the message text is included in the body field.
+When `WEBHOOK_URL` is set, each incoming message triggers a POST request to that URL with a `type` of `message_received` and a `data` object containing message details, including the sender, text body, timestamp, and JID. Only the message text is included in the body field. When `WEBHOOK_SECRET` is configured, it is sent in the request's `Authorization` header using the ******
 
 Send `/ping` to the connected WhatsApp account to receive a Pong response and the API process uptime.
