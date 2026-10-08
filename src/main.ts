@@ -12,6 +12,7 @@ import { formatPhoneToUser, formatUptime, getCachedJid, logger } from './utils'
 import { sendHook } from './hook'
 import Queue from './queue'
 import { InteractiveButtonName, sendButtons } from '@destroyer/button-helper'
+import { rmSync } from 'fs'
 
 let sock: ReturnType<typeof makeWASocket>
 dotenv.config({ quiet: true })
@@ -36,7 +37,7 @@ function validateToken(req: Request, res: Response, next: NextFunction) {
     const token = authHeader.split(' ')[1]
 
     if (!token?.length || token !== authToken) {
-        res.status(403).json({
+        res.status(401).json({
             status: false,
             error: 'Invalid auth token.'
         })
@@ -57,6 +58,11 @@ async function connectToWhatsApp() {
         },
         logger: pinoLogger,
         syncFullHistory: false,
+        connectTimeoutMs: 120000,
+        defaultQueryTimeoutMs: 120000,
+        enableAutoSessionRecreation: true,
+        enableRecentMessageCache: false,
+        keepAliveIntervalMs: 25000,
     })
 
     sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
@@ -67,7 +73,9 @@ async function connectToWhatsApp() {
             if (shouldReconnect) {
                 await connectToWhatsApp()
             } else {
-                logger('auth', 'Client disconnected. Please delete the .auth folder and restart the application to re-authenticate.')
+                rmSync('.auth', { recursive: true, force: true })
+                logger('auth', 'Client disconnected. Please restart the application to re-authenticate.')
+                process.exit(0)
             }
         } else if (connection === 'open') {
             const number = formatPhoneToUser(sock.user?.phoneNumber ?? sock.user?.id ?? '')
@@ -77,6 +85,7 @@ async function connectToWhatsApp() {
         }
 
         if (qr) {
+            console.clear()
             logger('auth', 'Scan the QR Code below to connect to WhatsApp:')
             generate(qr, { small: true })
         }

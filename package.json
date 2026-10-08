@@ -1,5 +1,11 @@
 {
   "name": "baileys-api",
+  "description": "A simple HTTP REST API for sending WhatsApp messages using Baileys",
+  "author": {
+    "name": "Gabriel Silva"
+  },
+  "license": "MIT",
+  "version": "1.0.0",
   "scripts": {
     "start": "ts-node src/main.ts"
   },
