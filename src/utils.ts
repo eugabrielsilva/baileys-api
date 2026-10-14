@@ -55,14 +55,16 @@ export function logger(type: string, message: string, ...optionalParams: any[]):
         warning: '\x1b[33m',
         error: '\x1b[31m',
         info: '\x1b[34m',
-        auth: '\x1b[35m'
+        auth: '\x1b[35m',
+        success: '\x1b[32m'
     }
 
     const levels: Record<string, (...args: any[]) => void> = {
         warning: console.warn,
         error: console.error,
         info: console.log,
-        auth: console.log
+        auth: console.log,
+        success: console.log
     }
 
     const date = new Date().toLocaleString()
@@ -134,4 +136,10 @@ export function extractPhoneFromJid(jid?: string | null): string | null {
     }
 
     return null
+}
+
+export async function hashString(str: string) {
+    const data = new TextEncoder().encode(str)
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data)
+    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')
 }

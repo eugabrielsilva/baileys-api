@@ -27,7 +27,7 @@ Copy the example environment file and edit it with your settings:
 cp .env.example .env
 ```
 
-Start the API:
+Start the API server:
 
 ```sh
 npm start
@@ -45,29 +45,29 @@ The application loads values from `.env` at startup. All settings are optional; 
 | ----------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PORT`            | `3000`  | HTTP server port.                                                                                                                               |
 | `AUTH_TOKEN`      | Empty   | When set, protects the HTTP API. Send it in the `Authorization` header using the `Bearer` scheme. If empty, API requests are not authenticated. |
-| `WEBHOOK_URL`     | Empty   | URL that receives notifications for incoming messages. Leave empty to disable webhook delivery.                                                 |
+| `WEBHOOK_URL`     | Empty   | URL that receives notifications for incoming/outgoing messages. Leave empty to disable webhook delivery.                                        |
 | `WEBHOOK_SECRET`  | Empty   | Secret used by the webhook integration.                                                                                                         |
 | `QUEUE_MIN_DELAY` | `2500`  | Minimum delay, in milliseconds, before a queued message is sent.                                                                                |
 | `QUEUE_MAX_DELAY` | `5000`  | Maximum delay, in milliseconds, before a queued message is sent.                                                                                |
 
 Choose a strong, private `AUTH_TOKEN` before exposing the API to a network.
 
-**Do not commit `.env`, `.auth`, or other credentials.**
+**Do not commit `.env`, `.auth`, `.phone-map.json` or other credentials.**
 
 ## Usage
 
 ### Send a message
 
-Send a JSON `POST` request to `/send-message/{number}`. Use the recipient's **phone number with its country calling code**; non-digit characters are stripped when resolving the WhatsApp recipient.
+Send a JSON `POST` request to `/message/{number}`. Use the recipient's **phone number with its country calling code**; non-digit characters are stripped when resolving the WhatsApp recipient.
 
 ```sh
-curl -X POST http://localhost:3000/send-message/15551234567 \
+curl -X POST http://localhost:3000/message/15551234567 \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer $AUTH_TOKEN" \
   -d '{"message":"Hello from the API"}'
 ```
 
-The `Authorization` header is only required when `AUTH_TOKEN` is configured. A successful request returns HTTP `201` and queues the message for delivery. **The response indicates that the message was queued for sending, not that WhatsApp has confirmed delivery.**
+The `Authorization` header is only required when `AUTH_TOKEN` is configured. A successful request returns HTTP `201` and queues the message for delivery. **The response indicates that the message was queued for sending, not that WhatsApp has confirmed delivery.** If you want to listen for message deliveries, use the webhook as explained below.
 
 To include URL buttons, provide a `buttons` array with `text` and `url` properties:
 
@@ -89,6 +89,28 @@ When `WEBHOOK_URL` is set, each incoming message triggers a POST request to that
 
 When `WEBHOOK_SECRET` is configured, it is sent in the request's `Authorization` header.
 
+### Outgoing messages
+
+Similarly, outgoing messages trigger a POST request to the webhook URL with a `type` of `message_sent` and a `data` object containing the message details.
+
+**Webhook body example:**
+
+```json
+{
+  "id": "1a79a4d60de6718e8e5b326e338ae533",
+  "type": "message_received",
+  "data": {
+    "id": "3EB0AF6F9564B117E30563",
+    "number": "+15551234567",
+    "body": "Example message",
+    "date": "2026-10-14T14:10:19.000Z",
+    "timestamp": 1791987019,
+    "name": "Contact Name",
+    "jid": "15551234567@s.whatsapp.net"
+  }
+}
+```
+
 ### Health check
 
-Send `/ping` to the connected WhatsApp account to receive a Pong response and the API process uptime. This message is not sent to the webhook.
+Send a message with `/ping` to the connected WhatsApp number to receive a Pong response and the API process uptime. **This message is not sent to the webhook.**
