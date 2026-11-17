@@ -125,7 +125,8 @@ async function connectToWhatsApp() {
 
 async function initializeServer() {
     const app = express()
-    const PORT = process.env.PORT || 3000
+    const HOST = String(process.env.HOST || '0.0.0.0')
+    const PORT = Number(process.env.PORT || 3000)
 
     app.use(express.json())
     app.use(validateToken)
@@ -218,7 +219,7 @@ async function initializeServer() {
         }
     })
 
-    app.listen(PORT, () => {
+    app.listen(PORT, HOST, () => {
         logger('success', `HTTP server is running on port ${PORT}.`)
     })
 }
