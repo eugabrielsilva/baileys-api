@@ -1,6 +1,6 @@
 import axios from "axios"
 import { extractPhoneFromJid, formatDate, getCachedPhone, hashString, logger, setCachedPhone } from "./utils"
-import { WAMessage } from "@whiskeysockets/baileys"
+import { WAMessage } from "@innovatorssoft/baileys"
 
 export async function sendHook(hookUrl: string, type: string, message: WAMessage) {
     try {

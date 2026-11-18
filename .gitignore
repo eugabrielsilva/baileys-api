@@ -3,3 +3,4 @@
 /.auth/
 /node_modules/
 /dist/
+voip-debug.log

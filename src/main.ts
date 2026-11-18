@@ -2,7 +2,9 @@ import makeWASocket, {
     DisconnectReason,
     useMultiFileAuthState,
     makeCacheableSignalKeyStore,
-} from '@whiskeysockets/baileys'
+    WAMessage,
+    generateUrlButtonMessage,
+} from '@innovatorssoft/baileys'
 import { Boom } from '@hapi/boom'
 import { generate } from 'qrcode-terminal'
 import P from 'pino'
@@ -11,8 +13,12 @@ import express, { NextFunction, Request, Response } from 'express'
 import { formatPhoneToUser, formatUptime, getCachedJid, logger } from './utils'
 import { sendHook } from './hook'
 import Queue from './queue'
-import { InteractiveButtonName, sendButtons } from '@destroyer/button-helper'
 import { rmSync } from 'fs'
+
+interface RequestButton {
+    text: string
+    url: string
+}
 
 let sock: ReturnType<typeof makeWASocket>
 dotenv.config({ quiet: true })
@@ -168,24 +174,19 @@ async function initializeServer() {
                 logger('info', `Queuing message "${message}" to ${formattedPhone}...`)
 
                 Queue.add(async () => {
-                    let m: any
+                    let m: WAMessage | undefined
+                    let content: any
 
                     if (buttons && Array.isArray(buttons) && buttons.length > 0) {
-                        m = await sendButtons(sock, jid, {
-                            text: message,
-                            buttons: buttons.map((btn: any) => {
-                                return {
-                                    name: InteractiveButtonName.CtaUrl,
-                                    buttonParamsJson: JSON.stringify({
-                                        display_text: btn.text,
-                                        url: btn.url
-                                    })
-                                }
-                            })
-                        })
+                        content = generateUrlButtonMessage(message, buttons.map((btn: RequestButton) => ({
+                            displayText: btn.text,
+                            url: btn.url
+                        })))
                     } else {
-                        m = await sock.sendMessage(jid, { text: message })
+                        content = { text: message }
                     }
+
+                    m = await sock.sendMessage(jid, content)
 
                     logger('success', `Message sent to ${formattedPhone}.`)
 

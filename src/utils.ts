@@ -1,4 +1,4 @@
-import makeWASocket, { jidDecode } from "@whiskeysockets/baileys"
+import makeWASocket, { jidDecode } from "@innovatorssoft/baileys"
 import { readFileSync, writeFileSync } from "fs"
 import { join } from "path"
 
@@ -104,7 +104,7 @@ export async function getCachedJid(sock: ReturnType<typeof makeWASocket>, phone:
     return resolved
 }
 
-export async function resolvePhoneToJid(sock: ReturnType<typeof makeWASocket>, phone: string): Promise<string | null> {
+export async function resolvePhoneToJid(sock: any, phone: string): Promise<string | null> {
     const digits = phone.replace(/\D/g, '')
     if (!digits) return null
 
